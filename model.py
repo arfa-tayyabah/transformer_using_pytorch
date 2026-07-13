@@ -1,7 +1,5 @@
 import torch 
-import torch.nn as nn
 import math
-import torch
 from torch import nn
 
 class NormalizationLayer(nn.Module):
@@ -121,6 +119,15 @@ class EncoderBlock(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, features : int, layers : nn.ModuleList):
         super().__init__()
+        self.layers = layers
+        self.norm = NormalizationLayer(features)
+
+    def forward(self, x, mask):
+        for layer in self.layers:
+            x = layer(x, mask)
+        return self.norm(x)
+
+
         
 
 
