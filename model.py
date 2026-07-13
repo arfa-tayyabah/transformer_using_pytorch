@@ -1,6 +1,9 @@
 import torch 
 import torch.nn as nn
 import math
+import torch
+from torch import nn
+
 class NormalizationLayer(nn.Module):
     def __init__(self, features: int, eps = 10**-6):
         super().__init__()
@@ -78,7 +81,8 @@ class MultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def attention(self, query, key, value, mask, dropout: nn.Dropout):
-        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        d_h = query.shape[-1]
+        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_h)
         if mask is not None:
             scores = scores.masked_fill(mask == 0, float('-inf'))
         attn_weights = torch.softmax(scores, dim=-1)
@@ -86,21 +90,40 @@ class MultiHeadAttention(nn.Module):
             attn_weights = dropout(attn_weights)
         return torch.matmul(attn_weights, value), attn_weights
 
-    def forward(self, x):
-        batch_size, seq_len, _ = x.size()
+    def forward(self, q, k, v, mask=None):
+        query = self.query(q)
+        key = self.key(k)
+        value = self.value(v)
 
-        # Linear projections
-        Q = self.query(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
-        K = self.key(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
-        V = self.value(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
+        
+        Q = query.view(query.shape[0], query.shape[1], self.num_heads, self.head_dim).transpose(1, 2)
+        K = key.view(key.shape[0], key.shape[1], self.num_heads, self.head_dim).transpose(1, 2)
+        V = value.view(value.shape[0], value.shape[1], self.num_heads, self.head_dim).transpose(1, 2)
 
-        # Scaled dot-product attention
-        scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.head_dim)
-        attn_weights = torch.softmax(scores, dim=-1)
-        attn_weights = self.dropout(attn_weights)
+        x, self.attn_weights = MultiHeadAttention.attention(Q, K, V, mask, self.dropout)
 
-        # Weighted sum of values
-        context = torch.matmul(attn_weights, V).transpose(1, 2).contiguous().view(batch_size, seq_len, self.features)
+        x = x.transpose(1, 2).contiguous().view(x.shape[0], -1, self.features)
 
-        return self.out(context) 
+        return self.out(x) 
+    
+class EncoderBlock(nn.Module):
+    def __init__(self, features : int, attention_block: MultiHeadAttention, feed_forward : FeedForwardBlock, dropout : float):
+        super().__init__()
+        self.attention_block = attention_block
+        self.feed_forward = feed_forward
+        self.residual_connection = nn.ModuleList([ResidualConnection(features, dropout) for _ in range(2)])
+
+    def forward(self, x, src_mask):
+        x = self.residual_connection[0](x, lambda x: self.attention_block(x,x,x, src_mask))
+        x = self.residual_connection[1](x, self.feed_forward)
+        return x
+
+class Encoder(nn.Module):
+    def __init__(self, features : int, layers : nn.ModuleList):
+        super().__init__()
+        
+
+
+
+
 
