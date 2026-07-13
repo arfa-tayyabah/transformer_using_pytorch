@@ -1,0 +1,15 @@
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python Cache and Compiled Files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch/Deep Learning artifacts (Optional but highly recommended)
+.ipynb_checkpoints/
+*.pt
+*.pth
