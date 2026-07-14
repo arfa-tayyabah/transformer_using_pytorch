@@ -80,7 +80,7 @@ class MultiHeadAttention(nn.Module):
 
     @staticmethod
     def attention(query, key, value, mask, dropout: nn.Dropout):
-        d_h = query.shape[-1]
+        d_h = query.shape[-1] #b,n_h,sq, h_d
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_h)
         if mask is not None:
             scores = scores.masked_fill(mask == 0, float('-inf'))
@@ -112,8 +112,8 @@ class EncoderBlock(nn.Module):
         self.feed_forward = feed_forward
         self.residual_connection = nn.ModuleList([ResidualConnection(features, dropout) for _ in range(2)])
 
-    def forward(self, x, src_mask):
-        x = self.residual_connection[0](x, lambda x: self.attention_block(x,x,x, src_mask))
+    def forward(self, x):
+        x = self.residual_connection[0](x, lambda x: self.attention_block(x, x, x))
         x = self.residual_connection[1](x, self.feed_forward)
         return x
 
@@ -123,11 +123,11 @@ class Encoder(nn.Module):
         self.layers = layers
         self.norm = NormalizationLayer(features)
 
-    def forward(self, x, mask):
+    def forward(self, x):
         for layer in self.layers:
-            x = layer(x, mask)
+            x = layer(x)
         return self.norm(x)
-
+    
 class DecoderBlock(nn.Module):
     def __init__(self, features : int, attention_block : MultiHeadAttention, cross_attention : MultiHeadAttention, feed_forward : FeedForwardBlock, dropout : float):
         super().__init__()
@@ -136,9 +136,9 @@ class DecoderBlock(nn.Module):
         self.feed_forward = feed_forward
         self.residual_connection = nn.ModuleList([ResidualConnection(features, dropout) for _ in range(3)])
 
-    def forward(self, x, encoder_output, src_mask, trgt_mask):
+    def forward(self, x, encoder_output,  trgt_mask):
         x = self.residual_connection[0](x, lambda x : self.attention(x,x,x, trgt_mask))
-        x = self.residual_connection[1](x, lambda x : self.cross_attention(x,encoder_output,encoder_output, src_mask))
+        x = self.residual_connection[1](x, lambda x : self.cross_attention(x,encoder_output,encoder_output))
         x = self.residual_connection[2](x, self.feed_forward)
         return x
 
@@ -148,9 +148,9 @@ class Decoder(nn.Module):
         self.layers = layers
         self.norm = NormalizationLayer(features)
 
-    def forward(self, x, encoder_output, src_mask, trgt_mask):
+    def forward(self, x, encoder_output,  trgt_mask):
         for layer in self.layers:
-            x = layer(x, encoder_output, src_mask, trgt_mask)
+            x = layer(x, encoder_output, trgt_mask)
         return self.norm(x)
 
 class ProjectionLayer(nn.Module):
@@ -172,15 +172,15 @@ class Transformer(nn.Module):
         self.trgt_pos = trgt_pos
         self.projection_layer = projection_layer
 
-    def encode(self, src, src_mask):
+    def encode(self, src):
         src = self.src_emb(src)
         src = self.src_pos(src)
-        return self.encoder(src, src_mask)
+        return self.encoder(src)
     
-    def decode(self, encoder_output : torch.Tensor, src_mask: torch.Tensor, trgt : torch.Tensor, trgt_mask : torch.Tensor):
+    def decode(self, encoder_output : torch.Tensor,  trgt : torch.Tensor, trgt_mask : torch.Tensor):
         trgt = self.trgt_emb(trgt)
         trgt = self.trgt_pos(trgt)
-        return self.decoder(trgt, encoder_output, src_mask, trgt_mask)
+        return self.decoder(trgt, encoder_output, trgt_mask)
     
     def project(self, x):
         return self.projection_layer(x)
