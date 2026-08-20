@@ -16,7 +16,7 @@
 
 ## Overview
 
-This repository contains a **from-scratch implementation of the Transformer encoder-decoder architecture** in PyTorch, built directly from the original *"Attention Is All You Need"* paper (Vaswani et al., 2017). Every core component — multi-head attention, positional encoding, layer normalization, residual connections, and the feed-forward network — is implemented manually using low-level `torch.nn` primitives, with no reliance on pre-built `nn.Transformer` modules.
+This repository contains a **from-scratch implementation of the Transformer encoder-decoder architecture** in PyTorch, built directly from the original *"Attention Is All You Need"* paper (Vaswani et al., 2017). Every core component i.e. multi-head attention, positional encoding, layer normalization, residual connections, and the feed-forward network — is implemented manually using low-level `torch.nn` primitives, with no reliance on pre-built `nn.Transformer` modules.
 
 The goal of this project is to demonstrate a deep, working understanding of transformer internals: how attention scores are computed, how residual/normalization sublayers are composed, and how encoder and decoder stacks fit together into a full sequence-to-sequence model.
 
