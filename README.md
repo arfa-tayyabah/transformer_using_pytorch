@@ -9,8 +9,7 @@
   <img src="https://img.shields.io/badge/PyTorch-1.13%2B-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch">
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square" alt="Status">
-  <img src="https://img.shields.io/github/stars/arfa-tayyabah/transformer_using_pytorch?style=flat-square" alt="Stars">
-  <img src="https://img.shields.io/github/last-commit/arfa-tayyabah/transformer_using_pytorch?style=flat-square" alt="Last Commit">
+ 
 </p>
 
 ---
